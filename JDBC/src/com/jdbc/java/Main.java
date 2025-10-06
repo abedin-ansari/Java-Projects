@@ -1,7 +1,127 @@
-// Commented code are Boilerplate code for JDBC.
+package com.jdbc.java;  // Package name
+
+import java.sql.*;  // Import JDBC classes (Connection, Statement, PreparedStatement, ResultSet, etc.)
+
+public class Main {
+	
+	// ======================================================
+	// 🔹 Database Credentials
+	// ======================================================
+	private static final String url = "jdbc:mysql://localhost:3306/mydb"; // JDBC URL + database name
+	private static final String username = "root";  // MySQL username
+	private static final String password = "abedin62*****"; // MySQL password
+	
+	public static void main(String[] args) {
+		
+		// ======================================================
+		// 🔹 Step 1: Load MySQL JDBC Driver
+		// ======================================================
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");  // Registers the MySQL JDBC Driver class
+			System.out.println("✅ Driver Loaded Successfully!");
+		} catch (ClassNotFoundException e) {
+			System.out.println("❌ Driver Not Found: " + e.getMessage());
+			return; // Stop program if driver not found
+		}
+		
+		// ======================================================
+		// 🔹 Step 2: Establish Database Connection
+		// ======================================================
+		try {
+			Connection connection = DriverManager.getConnection(url, username, password); // Creates DB connection
+			System.out.println("✅ Connected to Database!");
+
+			
+			// ======================================================
+			// 🔹 Step 3: Create a PreparedStatement (Safer than Statement)
+			// ======================================================
+			// Using '?' placeholders prevents SQL Injection attacks and makes code cleaner
+			// Example for INSERT:
+			// String query = "INSERT INTO students(name, age, marks) VALUES (?, ?, ?)";
+			// Example for UPDATE:
+			String query = "UPDATE students SET name = ? WHERE id = ?";
+
+			// Create prepared statement
+			PreparedStatement preparedStatement = connection.prepareStatement(query);
+			
+			// ======================================================
+			// 🔹 Step 4: Set Values for the Placeholders (in order)
+			// ======================================================
+			// For INSERT Example:
+			// preparedStatement.setString(1, "Munchun Gupta");
+			// preparedStatement.setInt(2, 22);
+			// preparedStatement.setDouble(3, 50.0);
+			
+			// For UPDATE Example:
+			preparedStatement.setString(1, "Munchun C");  // replaces first '?'
+			preparedStatement.setInt(2, 4);              // replaces second '?'
+			
+			
+			// ======================================================
+			// 🔹 Step 5: Execute SQL Query
+			// ======================================================
+			// executeUpdate() → used for INSERT, UPDATE, DELETE (returns affected row count)
+			int rowsAffected = preparedStatement.executeUpdate();
+			
+			
+			// ======================================================
+			// 🔹 Step 6: Check Query Result
+			// ======================================================
+			if (rowsAffected > 0) {
+				System.out.println("✅ Data Updated Successfully!");
+			} else {
+				System.out.println("❌ No Rows Updated!");
+			}
+			
+			
+			// ======================================================
+			// 🔹 Step 7: Close Connection (Always close resources)
+			// ======================================================
+			connection.close();
+			System.out.println("✅ Connection Closed!");
+			
+		} catch (SQLException e) {
+			System.out.println("❌ SQL Error: " + e.getMessage());
+		}
+	}
+}
+
+
+// =========================================================
+// 🧠 NOTES — To Remember JDBC Boilerplate Structure
+// =========================================================
+//
+// 🔸 Step 1 → Load JDBC Driver
+//        Class.forName("com.mysql.cj.jdbc.Driver");
+//
+// 🔸 Step 2 → Establish Connection
+//        Connection con = DriverManager.getConnection(url, user, pass);
+//
+// 🔸 Step 3 → Create Statement / PreparedStatement
+//        Statement stmt = con.createStatement();
+//        OR
+//        PreparedStatement pstmt = con.prepareStatement(query);
+//
+// 🔸 Step 4 → Set parameters (for PreparedStatement only)
+//        pstmt.setString(1, "name");
+//
+// 🔸 Step 5 → Execute Query
+//        stmt.executeQuery()  → for SELECT
+//        stmt.executeUpdate() → for INSERT / UPDATE / DELETE
+//
+// 🔸 Step 6 → Process Results (if SELECT)
+//
+// 🔸 Step 7 → Close Connection
+//
+// =========================================================
+//
+// Below code (commented) is your reference for JDBC boilerplate — 
+// it shows the basic structure for quickly setting up JDBC in new projects.
+// Keep it for review later.
+// ---------------------------------------------------------
 
 //package com.jdbc.java;
-
+//
 //import java.sql.*;
 //
 //public class Main {
@@ -12,11 +132,9 @@
 //	
 //	public static void main(String[] args) {
 //		try {
-//			Class.forName("com.mysql.cj.jdbc.Driver") // To Load Driver
+//			Class.forName("com.mysql.cj.jdbc.Driver"); // To Load Driver
 //		} catch(ClassNotFoundException e) {
 //			System.out.println(e.getMessage());
-//			// or
-//			// e.printStackTrace();
 //		}
 //		
 //		try {
@@ -27,62 +145,3 @@
 //		}
 //	}
 //}
-
-package com.jdbc.java;  // Package name
-
-import java.sql.*;  // Import JDBC classes
-
-public class Main {
-	
-	// Database credentials
-	private static final String url = "jdbc:mysql://localhost:3306/mydb"; // DB URL + DB name
-	private static final String username = "root";  // MySQL username
-	private static final String password = "abedin62*****"; // MySQL password
-	
-	public static void main(String[] args) {
-		try {
-			// 🔹 Step 1: Load the JDBC Driver (registers the MySQL driver)
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			System.out.println("✅ Driver Loaded Successfully!");
-		} catch (ClassNotFoundException e) {
-			System.out.println("❌ Driver Not Found: " + e.getMessage());
-		}
-		
-		try {
-			// 🔹 Step 2: Establish Connection to MySQL
-			Connection connection = DriverManager.getConnection(url, username, password);
-			System.out.println("✅ Connected to Database!");
-
-			// 🔹 Step 3: Create a Statement object to send SQL queries
-			Statement statement = connection.createStatement();
-			
-			// 🔹 Step 4: Write SQL Query
-			String query = "SELECT * FROM students";
-			
-			// 🔹 Step 5: Execute the Query and get ResultSet
-			ResultSet resultSet = statement.executeQuery(query);
-			
-			// 🔹 Step 6: Loop through each record (row) in ResultSet
-			while (resultSet.next()) {
-				int id = resultSet.getInt("id");          // get integer value from 'id' column
-				String name = resultSet.getString("name"); // get string value from 'name' column
-				int age = resultSet.getInt("age");         // get integer value from 'age' column
-				double marks = resultSet.getDouble("marks"); // get double value from 'marks' column
-				
-				// 🔹 Step 7: Display the data
-				System.out.println("Id: " + id);
-				System.out.println("Name: " + name);
-				System.out.println("Age: " + age);
-				System.out.println("Marks: " + marks);
-				System.out.println("-------------------------");
-			}
-			
-			// 🔹 Step 8: Close the connection (best practice)
-			connection.close();
-			System.out.println("✅ Connection Closed!");
-			
-		} catch (SQLException e) {
-			System.out.println("❌ SQL Error: " + e.getMessage());
-		}
-	}
-}
