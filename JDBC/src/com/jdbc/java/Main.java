@@ -1,29 +1,30 @@
 package com.jdbc.java;  // Package name
 
+import java.util.*;
 import java.sql.*;  // Import JDBC classes (Connection, Statement, PreparedStatement, ResultSet, etc.)
 
 public class Main {
-	
+
 	// ======================================================
 	// 🔹 Database Credentials
 	// ======================================================
 	private static final String url = "jdbc:mysql://localhost:3306/mydb"; // JDBC URL + database name
-	private static final String username = "root";  // MySQL username
+	private static final String username = "root";   // MySQL username
 	private static final String password = "abedin62*****"; // MySQL password
-	
+
 	public static void main(String[] args) {
-		
+
 		// ======================================================
 		// 🔹 Step 1: Load MySQL JDBC Driver
 		// ======================================================
 		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");  // Registers the MySQL JDBC Driver class
+			Class.forName("com.mysql.cj.jdbc.Driver");  // Registers MySQL JDBC Driver
 			System.out.println("✅ Driver Loaded Successfully!");
 		} catch (ClassNotFoundException e) {
 			System.out.println("❌ Driver Not Found: " + e.getMessage());
 			return; // Stop program if driver not found
 		}
-		
+
 		// ======================================================
 		// 🔹 Step 2: Establish Database Connection
 		// ======================================================
@@ -31,55 +32,67 @@ public class Main {
 			Connection connection = DriverManager.getConnection(url, username, password); // Creates DB connection
 			System.out.println("✅ Connected to Database!");
 
-			
 			// ======================================================
-			// 🔹 Step 3: Create a PreparedStatement (Safer than Statement)
+			// 🔹 Step 3: Create PreparedStatement for Batch Insert
 			// ======================================================
-			// Using '?' placeholders prevents SQL Injection attacks and makes code cleaner
-			// Example for INSERT:
-			// String query = "INSERT INTO students(name, age, marks) VALUES (?, ?, ?)";
-			// Example for UPDATE:
-			String query = "UPDATE students SET name = ? WHERE id = ?";
-
-			// Create prepared statement
+			// '?' → placeholders for dynamic values (set later using setXXX methods)
+			String query = "INSERT INTO students (name, age, marks) VALUES (?, ?, ?)";
 			PreparedStatement preparedStatement = connection.prepareStatement(query);
-			
+
+			Scanner sc = new Scanner(System.in);
+
 			// ======================================================
-			// 🔹 Step 4: Set Values for the Placeholders (in order)
+			// 🔹 Step 4: Take User Input and Add to Batch
 			// ======================================================
-			// For INSERT Example:
-			// preparedStatement.setString(1, "Munchun Gupta");
-			// preparedStatement.setInt(2, 22);
-			// preparedStatement.setDouble(3, 50.0);
-			
-			// For UPDATE Example:
-			preparedStatement.setString(1, "Munchun C");  // replaces first '?'
-			preparedStatement.setInt(2, 4);              // replaces second '?'
-			
-			
-			// ======================================================
-			// 🔹 Step 5: Execute SQL Query
-			// ======================================================
-			// executeUpdate() → used for INSERT, UPDATE, DELETE (returns affected row count)
-			int rowsAffected = preparedStatement.executeUpdate();
-			
-			
-			// ======================================================
-			// 🔹 Step 6: Check Query Result
-			// ======================================================
-			if (rowsAffected > 0) {
-				System.out.println("✅ Data Updated Successfully!");
-			} else {
-				System.out.println("❌ No Rows Updated!");
+			// Loop allows user to insert multiple records before executing all at once
+			while (true) {
+				System.out.print("Enter name: ");
+				String name = sc.next();
+
+				System.out.print("Enter age: ");
+				int age = sc.nextInt();
+
+				System.out.print("Enter marks: ");
+				double marks = sc.nextDouble();
+
+				// 🔸 Set parameters for current record (filling '?' placeholders)
+				preparedStatement.setString(1, name);
+				preparedStatement.setInt(2, age);
+				preparedStatement.setDouble(3, marks);
+
+				// 🔸 Add current record to batch (doesn’t run yet)
+				preparedStatement.addBatch();
+
+				System.out.print("Add more data? (Y/N): ");
+				String choice = sc.next();
+
+				if (choice.equalsIgnoreCase("N")) break; // stop when user says 'N'
 			}
-			
-			
+
 			// ======================================================
-			// 🔹 Step 7: Close Connection (Always close resources)
+			// 🔹 Step 5: Execute All Queries in Batch
 			// ======================================================
+			// Runs all batched queries together → reduces round-trips to DB
+			int[] results = preparedStatement.executeBatch();
+
+			// ======================================================
+			// 🔹 Step 6: Check Batch Execution Results
+			// ======================================================
+			System.out.println("\n📦 Batch Execution Results:");
+			for (int i = 0; i < results.length; i++) {
+				if (results[i] == Statement.SUCCESS_NO_INFO || results[i] > 0)
+					System.out.println("✅ Query " + (i + 1) + " executed successfully.");
+				else
+					System.out.println("❌ Query " + (i + 1) + " failed.");
+			}
+
+			// ======================================================
+			// 🔹 Step 7: Close Connection
+			// ======================================================
+			// Always close connection — prevents memory & resource leaks
 			connection.close();
-			System.out.println("✅ Connection Closed!");
-			
+			System.out.println("\n✅ Connection Closed!");
+
 		} catch (SQLException e) {
 			System.out.println("❌ SQL Error: " + e.getMessage());
 		}
